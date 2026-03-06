@@ -3,8 +3,8 @@ from flask_cors import CORS
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
-from sqlalchemy import Integer, String
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import Integer, String, ForeignKey
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 class Base(DeclarativeBase):
     pass
@@ -16,11 +16,30 @@ class TodoItem(db.Model):
     title: Mapped[str] = mapped_column(String(100))
     done: Mapped[bool] = mapped_column(default=False)
 
+    comments: Mapped[list["Comment"]] = relationship(back_populates="todo")
+
     def to_dict(self):
         return {
             "id": self.id,
             "title": self.title,
             "done": self.done,
+            "comments": [
+                comment.to_dict() for comment in self.comments
+            ]
+        }
+
+class Comment(db.Model):
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    message: Mapped[str] = mapped_column(String(250))
+    todo_id: Mapped[int] = mapped_column(ForeignKey('todo_item.id', ondelete="CASCADE"))
+
+    todo: Mapped["TodoItem"] = relationship(back_populates="comments")
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "message": self.message,
+            "todo_id": self.todo_id
         }
 
 app = Flask(__name__)
@@ -82,3 +101,21 @@ def delete_todo(id):
     db.session.delete(todo)
     db.session.commit()
     return jsonify({'message': 'Todo deleted successfully'})
+
+
+@app.route('/api/todos/<int:todo_id>/comments/', methods=['POST'])
+def add_comment(todo_id):
+    todo_item = TodoItem.query.get_or_404(todo_id)
+
+    data = request.get_json()
+    if not data or 'message' not in data:
+        return jsonify({'error': 'Comment message is required'}), 400
+
+    comment = Comment(
+        message=data['message'],
+        todo_id=todo_item.id
+    )
+    db.session.add(comment)
+    db.session.commit()
+ 
+    return jsonify(comment.to_dict())
