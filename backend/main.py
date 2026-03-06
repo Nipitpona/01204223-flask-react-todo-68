@@ -20,7 +20,7 @@ class TodoItem(db.Model):
         return {
             "id": self.id,
             "title": self.title,
-            "done": self.done
+            "done": self.done,
         }
 
 app = Flask(__name__)
@@ -32,8 +32,8 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///todos.db'
 db.init_app(app)
 migrate = Migrate(app, db)
 
-with app.app_context():
-    db.create_all()
+# with app.app_context():
+#     db.create_all()
 
 INITIAL_TODOS = [
     TodoItem(title='Learn Flask'),
