@@ -8,16 +8,20 @@ function TodoItem({todo, toggleDone, deleteTodo, addNewComment}) {
             <span className={todo.done ? "done" : ""}>{todo.title}</span>
             <button onClick={() => {toggleDone(todo.id)}}>Toggle</button>
             <button onClick={() => {deleteTodo(todo.id)}}>❌</button>
-            {(todo.comments) && (todo.comments.length > 0) && (
-              <>
-                <b>Comments:</b>
-                <ul>
-                  {todo.comments.map(comment => (
-                    <li key={comment.id}>{comment.message}</li>
-                  ))}
-                </ul>
-              </>
+
+            {todo.comments && todo.comments.length > 0 ? (
+                    <>
+                        <b>Comments ({todo.comments.length}):</b>
+                        <ul>
+                            {todo.comments.map(comment => (
+                                <li key={comment.id}>{comment.message}</li>
+                            ))}
+                        </ul>
+                    </>
+                ) : (
+                    <p>No comments</p>
             )}
+
             <div className="new-comment-forms">
               <input
                 type="text"
